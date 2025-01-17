@@ -1,0 +1,51 @@
+# @Author: Dhananjay Kumar
+# @Date: 17-01-2025
+# @Last Modified by: Dhananjay Kumar
+# @Last Modified time: 17-01-2025
+# @Title: Python program to deploying an open-source LLM for a customer support application. What steps would you take to ensure the model provides accurate and contextually relevant answers to user queries
+
+
+import os
+from dotenv import load_dotenv
+import streamlit as st
+from langchain.prompts import ChatPromptTemplate
+from langchain.chains import LLMChain
+from langchain.llms import Ollama
+
+LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
+
+# Load environment variables
+load_dotenv()
+
+# Langsmith Tracking Configuration
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY", "")
+os.environ["LANGCHAIN_TRACKING_V2"] = "True"
+os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGCHAIN_PROJECT", "default_project")
+
+# Streamlit UI Setup
+st.title("Langchain Chatbot")
+input_text = st.text_input("What question do you have in your mind related to customer support")
+
+# Define Prompt Template
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful customer support assistant. Please respond to the question asked with respect to customer needs and expectations.."),
+    ("user", "Question: {question}")
+])
+
+# Configure LLM (Ollama Model)
+try:
+    llm = Ollama(model="gemma:2b")
+except Exception as e:
+    st.error("Failed to initialize Ollama model. Please check your setup.")
+    st.stop()
+
+# Combine Prompt and LLM into a Chain
+chain = LLMChain(prompt=prompt, llm=llm)
+
+# Process User Input and Generate Response
+if input_text:
+    try:
+        response = chain.run({"question": input_text})
+        st.write(response)
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
